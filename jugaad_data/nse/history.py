@@ -19,7 +19,7 @@ except:
     pd = None
 
 from jugaad_data import util as ut
-from .archives import (bhavcopy_raw, bhavcopy_save, 
+from .archives import (bhavcopy_raw, bhavcopy_save,
                         full_bhavcopy_raw, full_bhavcopy_save,
                         bhavcopy_fo_raw, bhavcopy_fo_save,
                         bhavcopy_index_raw, bhavcopy_index_save, expiry_dates)
@@ -27,7 +27,7 @@ from .archives import (bhavcopy_raw, bhavcopy_save,
 APP_NAME = "nsehistory"
 class NSEHistory:
     def __init__(self):
-        
+
         self.headers = {
             "Host": "www.nseindia.com",
             "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
@@ -67,20 +67,27 @@ class NSEHistory:
         url = urljoin(self.base_url, path)
         self.r = self.s.get(url, params=params, verify=self.ssl_verify)
         return self.r
-    
+
+    def format_series(self,series:str):
+        # Split the input string by commas and strip whitespace
+        words = [word.strip() for word in series.split(',')]
+        # Create the formatted string with brackets and quoted words
+        formatted_string = '[' + ','.join(f'"{word}"' for word in words) + ']'
+        return formatted_string
+
     @ut.cached(APP_NAME + '-stock')
     def _stock(self, symbol, from_date, to_date, series="EQ"):
         params = {
             'symbol': symbol,
             'from': from_date.strftime('%d-%m-%Y'),
             'to': to_date.strftime('%d-%m-%Y'),
-            'series': '["{}"]'.format(series),
+            'series': self.format_series(series),
         }
         self.r = self._get("stock_history", params)
         j = self.r.json()
         return j['data']
-    
-    
+
+
     @ut.cached(APP_NAME + '-derivatives')
     def _derivatives(self, symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None):
         valid_instrument_types = ["OPTIDX", "OPTSTK", "FUTIDX", "FUTSTK"]
@@ -97,19 +104,19 @@ class NSEHistory:
         if "OPT" in instrument_type:
             if not(strike_price and option_type):
                 raise Exception("Missing argument for OPTIDX or OPTSTK, require both strike_price and option_type")
-                
+
             params['strikePrice'] = "{:.2f}".format(strike_price)
             params['optionType'] = option_type
-        
+
         self.r = self._get("derivatives", params)
         j = self.r.json()
         return j['data']
-    
+
     def stock_raw(self, symbol, from_date, to_date, series="EQ"):
         date_ranges = ut.break_dates(from_date, to_date)
         params = [(symbol, x[0], x[1], series) for x in reversed(date_ranges)]
         chunks = ut.pool(self._stock, params, max_workers=self.workers)
-            
+
         return list(itertools.chain.from_iterable(chunks))
 
     def derivatives_raw(self, symbol, from_date, to_date, expiry_date, instrument_type, strike_price, option_type):
@@ -118,12 +125,12 @@ class NSEHistory:
         chunks = ut.pool(self._derivatives, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
 
-       
+
 
 h = NSEHistory()
 stock_raw = h.stock_raw
 derivatives_raw = h.derivatives_raw
-stock_select_headers = [  "CH_TIMESTAMP", "CH_SERIES", 
+stock_select_headers = [  "CH_TIMESTAMP", "CH_SERIES",
                     "CH_OPENING_PRICE", "CH_TRADE_HIGH_PRICE",
                     "CH_TRADE_LOW_PRICE", "CH_PREVIOUS_CLS_PRICE",
                     "CH_LAST_TRADED_PRICE", "CH_CLOSING_PRICE",
@@ -142,7 +149,7 @@ stock_dtypes = [  ut.np_date,  str,
             ut.np_float, ut.np_float,
             ut.np_float, ut.np_float, ut.np_float,
             ut.np_int, ut.np_float, ut.np_int, str]
-   
+
 def stock_csv(symbol, from_date, to_date, series="EQ", output="", show_progress=True):
     if show_progress:
         h = NSEHistory()
@@ -166,7 +173,7 @@ def stock_csv(symbol, from_date, to_date, series="EQ", output="", show_progress=
             for row in raw:
                 row_select = [str(row[x]) for x in stock_select_headers]
                 line = ",".join(row_select) + '\n'
-                fp.write(line) 
+                fp.write(line)
     return output
 
 def stock_df(symbol, from_date, to_date, series="EQ"):
@@ -179,11 +186,11 @@ def stock_df(symbol, from_date, to_date, series="EQ"):
         df[h] = df[h].apply(stock_dtypes[i])
     return df
 
-futures_select_headers = [  "FH_TIMESTAMP", "FH_EXPIRY_DT", 
+futures_select_headers = [  "FH_TIMESTAMP", "FH_EXPIRY_DT",
                     "FH_OPENING_PRICE", "FH_TRADE_HIGH_PRICE",
                     "FH_TRADE_LOW_PRICE", "FH_CLOSING_PRICE",
                     "FH_LAST_TRADED_PRICE", "FH_SETTLE_PRICE", "FH_TOT_TRADED_QTY", "FH_MARKET_LOT",
-                    "FH_TOT_TRADED_VAL", "FH_OPEN_INT", "FH_CHANGE_IN_OI", 
+                    "FH_TOT_TRADED_VAL", "FH_OPEN_INT", "FH_CHANGE_IN_OI",
                     "FH_SYMBOL"]
 futures_final_headers = [   "DATE", "EXPIRY",
                     "OPEN", "HIGH",
@@ -197,7 +204,7 @@ options_select_headers = [  "FH_TIMESTAMP", "FH_EXPIRY_DT", "FH_OPTION_TYPE", "F
                     "FH_OPENING_PRICE", "FH_TRADE_HIGH_PRICE",
                     "FH_TRADE_LOW_PRICE", "FH_CLOSING_PRICE",
                     "FH_LAST_TRADED_PRICE", "FH_SETTLE_PRICE", "FH_TOT_TRADED_QTY", "FH_MARKET_LOT",
-                    "FH_TOT_TRADED_VAL", "FH_OPEN_INT", "FH_CHANGE_IN_OI", 
+                    "FH_TOT_TRADED_VAL", "FH_OPEN_INT", "FH_CHANGE_IN_OI",
                     "FH_SYMBOL"]
 options_final_headers = [   "DATE", "EXPIRY", "OPTION TYPE", "STRIKE PRICE",
                     "OPEN", "HIGH",
@@ -234,22 +241,22 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
             for row in raw:
                 row_select = [str(row[x]) for x in select_headers]
                 line = ",".join(row_select) + '\n'
-                fp.write(line) 
+                fp.write(line)
     return output
 
 def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None):
     if not pd:
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
-    raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, 
+    raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type,
                             strike_price=strike_price, option_type=option_type)
-    futures_dtype = [  ut.np_date, ut.np_date, 
+    futures_dtype = [  ut.np_date, ut.np_date,
                 ut.np_float, ut.np_float,
                 ut.np_float, ut.np_float,
                 ut.np_float, ut.np_float,
                 ut.np_int, ut.np_int,
                 ut.np_float, ut.np_float, ut.np_float,
                 str]
-    
+
     options_dtype = [  ut.np_date, ut.np_date, str, ut.np_float,
                 ut.np_float, ut.np_float,
                 ut.np_float, ut.np_float,
@@ -302,22 +309,22 @@ class NSEIndexHistory(NSEHistory):
         url = urljoin(self.base_url, path)
         self.r = self.s.post(url, json=params, verify=self.ssl_verify)
         return self.r
-    
+
     @ut.cached(APP_NAME + '-index')
-    def _index(self, symbol, from_date, to_date): 
+    def _index(self, symbol, from_date, to_date):
         params = {'name': symbol,
                 'startDate': from_date.strftime("%d-%b-%Y"),
                 'endDate': to_date.strftime("%d-%b-%Y")
         }
         r = self._post_json("index_history", params=params)
         return json.loads(self.r.json()['d'])
-    
+
     def index_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
         params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
         chunks = ut.pool(self._index, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
-    
+
     @ut.cached(APP_NAME + '-index_pe')
     def _index_pe(self, symbol, from_date, to_date):
         params = {'name': symbol,
@@ -351,10 +358,10 @@ def index_csv(symbol, from_date, to_date, output="", show_progress=False):
             raw = list(itertools.chain.from_iterable(chunks))
     else:
         raw = index_raw(symbol, from_date, to_date)
-    
+
     if not output:
         output = "{}-{}-{}.csv".format(symbol, from_date, to_date)
-    
+
     if raw:
         with open(output, 'w') as fp:
             fieldnames = ["INDEX_NAME", "HistoricalDate", "OPEN", "HIGH", "LOW", "CLOSE"]
