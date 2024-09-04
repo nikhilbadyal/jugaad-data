@@ -10,7 +10,7 @@ import zipfile
 import requests
 import pprint
 def unzip(function):
-    
+
     def unzipper(*args, **kwargs):
         r = function(*args, **kwargs)
         fp = io.BytesIO(r)
@@ -32,8 +32,8 @@ class NSEArchives:
           yy - 19, 20
         yyyy - 2020, 2030
     """
-    timeout = 4 
-       
+    timeout = 4
+
     def __init__(self):
         self.s = requests.Session()
         h = {
@@ -41,7 +41,7 @@ class NSEArchives:
             "accept-encoding": "gzip, deflate, br",
             "accept":
     """text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9""",
-          
+
     }
         self.s.headers.update(h)
         self._routes = {
@@ -51,14 +51,14 @@ class NSEArchives:
                 "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip",
                 "udiff_bhavcopy":"/content/cm/BhavCopy_NSE_CM_0_0_0_{yyyy}{mm}{dd}_F_0000.csv.zip",
                 "udiff_bhavcopy_fo":"/content/fo/BhavCopy_NSE_FO_0_0_0_{yyyy}{mm}{dd}_F_0000.csv.zip",
-                
+
             }
-        
+
     def get(self, rout, **params):
         url = self.base_url + self._routes[rout].format(**params)
         self.r = self.s.get(url, timeout=self.timeout)
         return self.r
-    
+
     @unzip
     def bhavcopy_raw(self, dt):
         """Downloads raw bhavcopy text for a specific date"""
@@ -67,7 +67,7 @@ class NSEArchives:
         yyyy = dt.year
         r = self.get("bhavcopy", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
-    
+
     def bhavcopy_save(self, dt, dest, skip_if_present=True):
         """Downloads and saves raw bhavcopy csv file for a specific date"""
         fmt = "cm%d%b%Ybhav.csv"
@@ -81,7 +81,7 @@ class NSEArchives:
 
     def full_bhavcopy_raw(self, dt):
         """Downloads full raw bhavcopy text for a specific date"""
-        
+
         dd = dt.strftime('%d')
         mm = dt.strftime('%m')
         yyyy = dt.year
@@ -93,7 +93,7 @@ class NSEArchives:
                                                       out or full bhavcopy file is
                                                       not available for given
                                                       date (2019 and prior
-                                                      dates)""") 
+                                                      dates)""")
         return r.text
 
     def full_bhavcopy_save(self, dt, dest, skip_if_present=True):
@@ -111,7 +111,7 @@ class NSEArchives:
     def bulk_deals_raw(self):
         r = self.get("bulk_deals")
         return r.text
-    
+
     def bulk_deals_save(self, fname):
         text = self.bulk_deals_raw()
         with open(fname, 'w') as fp:
@@ -125,7 +125,7 @@ class NSEArchives:
         yyyy = dt.year
         r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
-    
+
     def bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "fo%d%b%Ybhav.csv"
@@ -136,7 +136,7 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
         return fname
-    
+
     @unzip
     def udiff_bhavcopy_fo_raw(self, dt):
         """Downloads raw bhavcopy text for a specific date"""
@@ -145,7 +145,7 @@ class NSEArchives:
         yyyy = dt.year
         r = self.get("udiff_bhavcopy_fo", yyyy=yyyy, mm=mm, dd=dd)
         return r.content
-    
+
     def udiff_bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "BhavCopy_NSE_FO_0_0_0_%Y%m%d_F_0000.csv"
@@ -156,7 +156,7 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
         return fname
-    
+
     @unzip
     def udiff_bhavcopy_raw(self, dt):
         """Downloads raw bhavcopy text for a specific date"""
@@ -165,11 +165,13 @@ class NSEArchives:
         yyyy = dt.year
         r = self.get("udiff_bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
         return r.content
-    
-    def udiff_bhavcopy_save(self, dt, dest, skip_if_present=True):
+
+    def udiff_bhavcopy_save(self, dt, dest, skip_if_present=True,fmt="BhavCopy_NSE_CM_0_0_0_%Y%m%d_F_0000.csv"):
         """ Saves Derivatives Bhavcopy to a directory """
-        fmt = "BhavCopy_NSE_CM_0_0_0_%Y%m%d_F_0000.csv"
-        fname = os.path.join(dest, dt.strftime(fmt))
+        if fmt == 'BhavCopy_NSE_CM_0_0_0_%Y%m%d_F_0000.csv':
+            fname = os.path.join(dest, dt.strftime(fmt))
+        else:
+            fname = os.path.join(dest, fmt)
         if os.path.isfile(fname) and skip_if_present:
             return fname
         text = self.udiff_bhavcopy_raw(dt)
@@ -181,7 +183,7 @@ class NSEIndicesArchives(NSEArchives):
     def __init__(self):
         super().__init__()
         self.base_url = "https://www.niftyindices.com"
-        self._routes = { 
+        self._routes = {
                 "bhavcopy": "/Daily_Snapshot/ind_close_all_{dd}{mm}{yyyy}.csv"
         }
         self.h = {
@@ -205,7 +207,7 @@ class NSEIndicesArchives(NSEArchives):
         yyyy = dt.year
         r = self.get("bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
         return r.text
-   
+
     def bhavcopy_index_save(self, dt, dest, skip_if_present=True):
         """Downloads and saves index bhavcopy csv for a specific date"""
         fmt = "ind_close_all_%d%m%Y.csv"
@@ -244,9 +246,9 @@ def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
         cells = filter(lambda x: x[0]==instrument_type, cells)
     if symbol:
         cells = filter(lambda x: x[1] == symbol, cells)
-    
+
     cells = filter(lambda x: int(x[10])>contracts, cells)
-    
+
     dts_txt = [row[2] for row in cells]
     dts = [datetime.strptime(d, "%d-%b-%Y").date() for d in dts_txt]
     return list(set(dts))
