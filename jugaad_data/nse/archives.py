@@ -9,6 +9,11 @@ import csv
 import zipfile
 import requests
 import pprint
+
+
+class BhavNotFoundError(Exception):
+    pass
+
 def unzip(function):
 
     def unzipper(*args, **kwargs):
@@ -164,6 +169,8 @@ class NSEArchives:
         mm = dt.strftime('%m').upper()
         yyyy = dt.year
         r = self.get("udiff_bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
+        if r.status_code != 200:
+            raise BhavNotFoundError(f"Bhav data not found for date {dt}. Error {r.content}")
         return r.content
 
     def udiff_bhavcopy_save(self, dt, dest, skip_if_present=True,fmt="BhavCopy_NSE_CM_0_0_0_%Y%m%d_F_0000.csv"):
