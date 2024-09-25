@@ -20,9 +20,9 @@ except:
 
 from jugaad_data import util as ut
 from .archives import (bhavcopy_raw, bhavcopy_save,
-                        full_bhavcopy_raw, full_bhavcopy_save,
-                        bhavcopy_fo_raw, bhavcopy_fo_save,
-                        bhavcopy_index_raw, bhavcopy_index_save, expiry_dates)
+                       full_bhavcopy_raw, full_bhavcopy_save,
+                       bhavcopy_fo_raw, bhavcopy_fo_save,
+                       bhavcopy_index_raw, bhavcopy_index_save, expiry_dates, BhavNotFoundError)
 
 APP_NAME = "nsehistory"
 class NSEHistory:
@@ -57,15 +57,16 @@ class NSEHistory:
         self.s = Session()
         self.s.headers.update(self.headers)
         self.ssl_verify = True
+        self.time_out = 4
 
     def _get(self, path_name, params):
         if "nseappid" not in self.s.cookies:
             path = self.path_map["equity_quote_page"]
             url = urljoin(self.base_url, path)
-            self.s.get(url, verify=self.ssl_verify)
+            self.s.get(url, verify=self.ssl_verify,timeout=self.time_out)
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
-        self.r = self.s.get(url, params=params, verify=self.ssl_verify)
+        self.r = self.s.get(url, params=params, verify=self.ssl_verify,timeout=self.time_out)
         return self.r
 
     def format_series(self,series:str):
@@ -84,6 +85,10 @@ class NSEHistory:
             'series': self.format_series(series),
         }
         self.r = self._get("stock_history", params)
+        if self.r.status_code == 403:
+            raise BhavNotFoundError("Rate limit hit kr diya bhai.")
+        if self.r.status_code != 200:
+            raise BhavNotFoundError(f"Bhav data not found for symbol {symbol} from date {from_date} to {to_date}. Error {self.r.content} {self.r.status_code}")
         j = self.r.json()
         return j['data']
 

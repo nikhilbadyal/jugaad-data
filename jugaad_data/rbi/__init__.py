@@ -11,7 +11,7 @@ def tr_to_json(wrapper):
         if len(tds) >= 2:
             key = tds[0].text.strip()
             val = tds[1].text.replace(':', '').replace('*','').replace('#', '').strip()
-            
+
             op[key] = val
     return op
 
@@ -19,13 +19,14 @@ def tr_to_json(wrapper):
 
 class RBI:
     base_url = "https://www.rbi.org.in/"
+    time_out = 5
 
     def __init__(self):
         self.s = Session()
-    
+
     def current_rates(self):
-        r = self.s.get(self.base_url)
-        
+        r = self.s.get(self.base_url,timeout=self.time_out)
+
         bs = BeautifulSoup(r.text, "html.parser")
         wrapper = bs.find('div', {"id": "wrapper"})
         trs = wrapper.find_all('tr')

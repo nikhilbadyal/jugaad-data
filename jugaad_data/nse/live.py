@@ -24,7 +24,7 @@ class NSELive:
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading"
     }
-    
+
     def __init__(self):
         self.s = Session()
         h = {
@@ -43,17 +43,17 @@ class NSELive:
             "Connection": "keep-alive",
             }
         self.s.headers.update(h)
-        self.s.get(self.page_url)
+        self.s.get(self.page_url,timeout=self.time_out)
 
     def get(self, route, payload={}):
         url = self.base_url + self._routes[route]
-        r = self.s.get(url, params=payload)
+        r = self.s.get(url, params=payload,timeout=self.time_out)
         return r.json()
 
     @live_cache
     def stock_quote(self, symbol):
         data = {"symbol": symbol}
-        return self.get("stock_quote", data) 
+        return self.get("stock_quote", data)
 
     @live_cache
     def stock_quote_fno(self, symbol):
@@ -63,7 +63,7 @@ class NSELive:
     @live_cache
     def trade_info(self, symbol):
         data = {"symbol": symbol, "section": "trade_info"}
-        return self.get("stock_quote", data) 
+        return self.get("stock_quote", data)
 
     @live_cache
     def market_status(self):
@@ -76,7 +76,7 @@ class NSELive:
             data["index"] = symbol
             data["indices"] = "true"
         return self.get("chart_data", data)
-    
+
     @live_cache
     def tick_data(self, symbol, indices=False):
         return self.chart_data(symbol, indices)
@@ -89,7 +89,7 @@ class NSELive:
     def eq_derivative_turnover(self, type="allcontracts"):
         data = {"index": type}
         return self.get("equity_derivative_turnover", data)
-    
+
     @live_cache
     def all_indices(self):
         return self.get("all_indices")
@@ -97,7 +97,7 @@ class NSELive:
     def live_index(self, symbol="NIFTY 50"):
         data = {"index" : symbol}
         return self.get("live_index", data)
-    
+
     @live_cache
     def index_option_chain(self, symbol="NIFTY"):
         data = {"symbol": symbol}
@@ -116,12 +116,12 @@ class NSELive:
     @live_cache
     def live_fno(self):
         return self.live_index("SECURITIES IN F&O")
-    
+
     @live_cache
     def pre_open_market(self, key="NIFTY"):
         data = {"key": key}
         return self.get("pre_open_market", data)
-    
+
     @live_cache
     def holiday_list(self):
         return self.get("holiday_list", {})
