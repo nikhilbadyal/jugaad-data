@@ -57,7 +57,7 @@ class NSEHistory:
         self.s = Session()
         self.s.headers.update(self.headers)
         self.ssl_verify = True
-        self.time_out = 4
+        self.time_out = 10
 
     def _get(self, path_name, params):
         if "nseappid" not in self.s.cookies:
