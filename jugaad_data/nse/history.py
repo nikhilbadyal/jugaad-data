@@ -89,8 +89,11 @@ class NSEHistory:
             raise BhavNotFoundError("Rate limit hit kr diya bhai.")
         if self.r.status_code != 200:
             raise BhavNotFoundError(f"Bhav data not found for symbol {symbol} from date {from_date} to {to_date}. Error {self.r.content} {self.r.status_code}")
-        j = self.r.json()
-        return j['data']
+        try:
+            j = self.r.json()
+            return j['data']
+        except Exception:
+            raise BhavNotFoundError(f"Unable to scrap data. {self.r.text}")
 
 
     @ut.cached(APP_NAME + '-derivatives')
