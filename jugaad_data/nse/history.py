@@ -29,20 +29,19 @@ class NSEHistory:
     def __init__(self):
 
         self.headers = {
-            "Host": "www.nseindia.com",
-            "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
-            "X-Requested-With": "XMLHttpRequest",
-            "pragma": "no-cache",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            }
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Referer': 'https://www.nseindia.com/get-quotes/equity?symbol=CDSL',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-GPC': '1',
+            'TE': 'trailers'
+        }
         self.path_map = {
             "stock_history": "/api/historical/cm/equity",
             "derivatives": "/api/historical/fo/derivatives",
