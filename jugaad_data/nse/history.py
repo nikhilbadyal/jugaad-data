@@ -32,7 +32,7 @@ class NSEHistory:
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0',
             'Accept': '*/*',
             'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            "Accept-Encoding": "gzip, deflate",
             'DNT': '1',
             'Connection': 'keep-alive',
             'Referer': 'https://www.nseindia.com/get-quotes/equity?symbol=CDSL',
